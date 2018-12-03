@@ -1,0 +1,405 @@
+var debugging = 0; 
+var subjectID = ""; condition = ""; lasttime = "";
+var conds = []; instructionChecks = []; pfInstructionChecks = []; testwords = [];
+var startPauseVal = 250; minusPauseVal = 15; minPauseVal = 10; masklen = 200;
+var longpauselen = 800; shortpauselen = 200; currpauselen = startPauseVal; 
+var ind = 0; itemCorr = 0;
+var onSL = true; ontest = false; onPR = false; onPC = false; 
+var onPFtaskA = false; onPFtaskB = false;
+var pfTypeA = ''; pfTypeB = '';
+var pstimsetA = []; pstimsetB = []; distractors = []; 
+var pfTaskAtargets = []; pfTaskBtargets = []; pfApauses = []; pfBpauses = []; // want to save this
+var pfAanswers = []; pfBanswers = []; // want to save this
+var easy = []; hard = [];  // want to save this
+var easytriplets = []; hardtriplets = []; // want to save this
+var stimset = []; words = []; wordseq = []; syllseq = []; trainseq = []; 
+var englishwords = []; // want to save this
+var testanswers = []; testitems = []; // want to save this
+var patternrecogTarget = []; patterncompletionTarget = []; patterncompletionQuestion = [];
+var patterncompletionFoils = []; patternrecogFoilsone = []; 
+var patternrecogFoilstwo = []; patternrecogFoilsthree = [];
+var exp_data = {};    hideElements();
+
+// ********** START: this function runs automatically when the page is loaded
+$(document).ready(function () {
+  
+    hideElements();
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 9; i++ ) {
+      subjectID += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+        
+    if (!debugging) {
+        var x = Math.floor(Math.random() * 2);
+        if (x===0) {
+          condition = 'letter';
+        } else {
+          condition = 'medium';
+        } 
+        showAll();
+    } else {
+        $('#demographics').show();
+        //$('#demographics').load('html/conditions.html');
+        $('#next').show();
+        $('#next').click(validateConditions);
+    }
+    
+});
+
+// ********** VALIDATECONDITIONS: get the condition they are using
+function validateConditions() {
+    
+    conds = $('#conds').serializeArray();
+    var ok = true;
+  
+    for (var i = 0; i < conds.length; i++) {
+        // test for empty answers
+        if (conds[i].value === "") {
+            alert('Please fill out all fields.');
+            ok = false;
+            break;
+        }        
+        if (conds[i].name === "condition") {
+            condition = conds[i].value;
+        }      
+    }
+  
+    // goes to next section
+    if (!ok) {
+        $('#demographics').show();
+        $('#demographics').load('html/conditions.html');
+        $('#next').show();
+        $('#next').click(validateConditions);
+    } else {   
+        hideElements();
+        showAll();
+    } 
+}
+
+// ********** showAll: shows all of the images, just to load them immediately
+function showAll() {
+  
+  hideElements();
+  //$('#instructions').show();
+  //$('#instructions').load('html/showall.html'); 
+  setTimeout(function() {showDemographics()},50);  
+}
+
+
+// ********** SHOWDEMOGRAPHICS: get demographic details
+function showDemographics() {
+    
+    hideElements();
+    $('#demographics').show();
+    $('#demographics').load('html/demographics.html');
+    $('#next').show();
+    $('#next').click(validateDemographics);
+}
+
+
+// ********** VALIDATEDEMOGRAPHICS: check to make sure demographic information is all okay
+function validateDemographics() {
+  
+    demographics = $('#demo').serializeArray();
+    var ok = true;
+    
+    if (demographics.length != 5) {
+      ok = false;
+      alert('Please fill out all fields.');
+      
+    } else {
+  
+      for (var i = 0; i < demographics.length; i++) {
+        // validate age
+        if ((demographics[i].name == "age") && (/[^0-9]/.test(demographics[i].value))) {
+            alert('Please only use numbers in age.');
+            ok = false;
+            break;
+        }
+        
+        // test for empty answers
+        if (demographics[i].value === "") {
+            alert('Please fill out all fields.');
+            ok = false;
+            break;
+        }
+        
+        // link this to their worker ID - change later
+        if (demographics[i].name == "workerID") {
+          demographics[i].value = demographics[i].value.toUpperCase();
+          demographics[i].value = demographics[i].value.replace(/\s+/g, '');
+          lasttime = getLastTime(demographics[i].value);
+        }
+      }
+    }
+  
+    // goes to next section
+    if (!ok) {
+        showDemographics();
+    } else {   
+        showGeneralInstructions();
+    }
+}
+
+
+// ********** SHOWGENERALINSTRUCTIONS: displays general experiment instructions
+function showGeneralInstructions() {
+
+    hideElements();
+    setExperiment();
+    $('#instructions').show();
+    $('#instructions').load('html/instructions.html');
+    $('#next').show();
+    $('#next').click(showInstructionChecks);
+}
+
+
+// ********** SHOWINSTRUCTIONCHECKS: asks the questions confirming they have read the instructions
+function showInstructionChecks() {
+  
+    hideElements();
+    $('#instructionchecks').show();
+    $('#instructionchecks').load('html/instructionchecks.html');    
+    $('#next').show();
+    $('#next').click(validateInstructionChecks);
+}
+
+
+// ********** VALIDATEINSTRUCTIONCHECKS: makes sure they answered the questions about instructions correctly
+function validateInstructionChecks() {
+  
+    hideElements();  
+    instructionChecks = $('#instr').serializeArray();
+
+    var ok = true;
+    for (var i = 0; i < instructionChecks.length; i++) {
+        // check for incorrect responses
+        if(instructionChecks[i].value != "correct") {
+            alert('At least one answer was incorrect; please read the instructions and try again.');
+            ok = false;
+            break;
+        }
+        // check for empty answers 
+        if (instructionChecks[i].value === "") {
+            alert('Please fill out all fields.');
+            ok = false;
+            break;    
+        }
+    }
+
+    // where this is the number of questions in the instruction check
+    if (instructionChecks.length != 3) {
+        alert('You have not answered all of the questions; please try again.');
+        ok = false;
+    }
+
+    // goes to next section
+    if (!ok) {
+        showSecondInstructions(); 
+    } else {
+        hideElements();
+        getReady(); 
+    }
+}
+
+
+
+// ********** GETREADY: shows the page right before beginning the SL sequence
+function getReady() {
+    hideElements();
+    ind = 0; lastRepeat = 0;
+    corrSLrepeats = 0; incorrSLrepeats = 0;  
+    $('#instructions').show();
+    $('#instructions').load('html/interim.html', function () {
+      $('#message').text('Okay, you are all set!');
+    });
+    $('#next').show();
+    $('#next').click(showStatisticalLearningTrial);
+}
+
+
+
+
+// ********** SHOWSTATISTICALLEARNINGTRIAL: shows a single image in the standard SL task
+function showStatisticalLearningTrial() {
+  
+  hideElements();
+  
+  pic = 'img/' + syllseq[ind];
+  console.log(syllseq)
+  $('#instructions').show();
+  $('#instructions').load('html/showpicture.html', function () {
+    $('#stimulus').attr('src',pic);
+  });
+  
+  setTimeout(function() {removePicture()},longpauselen);  
+}
+
+// ********** REMOVEPICTURE: removes the picture for shortpauselen milliseconds
+function removePicture() {
+  pic = 'img2/white.jpg';
+  ind = ind+1;
+  $('#instructions').show();
+  $('#instructions').load('html/showpicture.html', function () {
+    $('#stimulus').attr('src',pic);
+  });
+  if (ind < syllseq.length) {
+      setTimeout(function() {showStatisticalLearningTrial()},shortpauselen); 
+  } else {
+      onSL = false; ontest = true;
+      setTimeout(function() {getEnglishSequence()},shortpauselen); 
+  }
+}
+
+
+
+
+
+// ********** GETENGLISHSEQUENCE: has them report the words they saw
+function getEnglishSequence() {
+    hideElements();
+    $('#demographics').show();
+    $('#demographics').load('html/english.html');
+    $('#next').show();
+    $('#next').click(validateEnglishSequence);
+}
+
+
+// ********** VALIDATEENGLISHSEQUENCE: check to make sure they report the words right
+function validateEnglishSequence() {
+  
+    englishwords = $('#english').serializeArray();
+    var ok = true;
+  
+    if (englishwords[0].value == "") {
+        alert('Please put your words in the text box.');
+        ok = false;
+    }
+  
+    // goes to next section
+    if (!ok) {
+        getEnglishSequence();
+    } else {   
+        showTestTrials();
+    }
+}
+
+
+// ********** FINISHEXPERIMENT: show final instructions
+function finishExperiment() {
+
+    hideElements();
+    saveParticipantData();
+    $('#instructions').show();
+    $('#instructions').load('html/instructionsfinish.html', function () {
+        $('#subid').text(subjectID.toString());
+        $('#next').show();
+        $('#next').click(showDebrief);
+    });
+}
+
+
+
+// ********** SHOWDEBRIEF: shows the debrief text for those interested
+function showDebrief() {
+    hideElements();
+    $('#instructions').show();
+    var str = 'html/debrief.html';
+    $('#instructions').load(str, function () {
+        $('#subid').text(subjectID.toString());
+    });
+}
+
+
+// ********** SAVEDATA: writes that data to server
+function saveData(args) {
+    var data = args;
+    (function (d) {
+        $.post('submit', {"content": JSON.stringify(d)});
+    })(data);
+}
+
+
+// ********** SHUFFLEARRAYNOREPEATS: permute the values of array with no repeated items
+function shuffleArrayNoRepeats(array) {
+    var currentIndex = array.length-1, temporaryValue, randomIndex;
+    var repeat = true;
+    while (-1 !== currentIndex) {
+        repeat = true;
+        while (repeat) {
+          randomIndex = Math.floor(Math.random() * (array.length-1));
+          while ( (randomIndex==currentIndex) || 
+                randomIndex==(currentIndex+1) || randomIndex==(currentIndex-1)) {
+                  randomIndex = Math.floor(Math.random() * (array.length-1));
+                }
+          repeat = isRepeat(array,array[currentIndex],randomIndex);
+          if (repeat==false) {
+            repeat = isRepeat(array,array[randomIndex],currentIndex);
+          }
+        }
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+        currentIndex = currentIndex - 1;
+    }
+    return array;
+}
+
+
+// ********** GETLETTERS: gets just the letters from the image file name
+function getLetters(name) {
+  var letters = '';
+  if (name.length==12) {
+    letters = name.slice(6,8);
+  } else {
+    letters = name.slice(6,7);    
+  }
+  return letters;
+}
+
+
+// ********** SHUFFLEARRAY: permute the values of array
+function shuffleArray(array) {
+    var currentIndex = array.length, temporaryValue, randomIndex ;
+    while (0 !== currentIndex) {
+        currentIndex = currentIndex - 1;
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+    }
+    return array;
+}
+
+// ********** CONTAINS: returns TRUE if item is in array, FALSE otherwise
+function contains(array,item) {
+    var doesContain = false;
+    for (var i=0; i<array.length; i++) {
+      if (array[i]==item) {
+        doesContain = true;
+        break;
+      }   
+    }
+    return doesContain;
+}
+
+// ********** REMOVEITEM: removes the first instance of ITEM from the array. 
+function removeItem(array,item) {
+  var newArray = array;
+  for (var i=0; i<array.length; i++) {
+    if (newArray[i]==item) {
+      newArray.splice(i,1);
+      break;
+    }
+  }
+  return newArray;
+}
+
+// ********** HIDEELEMENTS: hides all DOM elements from the screen and clears the canvas
+function hideElements() {
+  
+  $('div').hide();  // hides all divs
+  $(':button').hide(); // hides all buttons
+  $(':button').unbind(); // unbinds all buttons
+}

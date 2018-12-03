@@ -1,0 +1,27 @@
+<form id="instr">
+    <br>
+Change questions as per task<br><br>
+
+  <label for="question1">During the visual sequence you should write down: </label><br>
+  <input type="radio" name="question1" value="incorrect" /> Any repeated items <br />
+  <input type="radio" name="question1" value="incorrect" /> Every item in the sequence <br />
+  <input type="radio" name="question1" value="correct" /> Any English words <br />
+  <input type="radio" name="question1" value="incorrect" /> Nothing, just watch the sequence  <br />
+  <br /><br />
+
+  <label for="question2">When you watch the visual sequence, you should: </label><br>
+  <input type="radio" name="question2" value="incorrect" /> Try to write all the items down <br />
+  <input type="radio" name="question2" value="incorrect" /> Do your best to memorise it <br />
+  <input type="radio" name="question2" value="incorrect" /> Try to find which item doesn't match <br />
+  <input type="radio" name="question2" value="correct" /> Just pay attention without doing anything else special <br />
+  <br /><br />
+
+  <label for="question3">During the two tasks after the visual sequence: </label><br>
+  <input type="radio" name="question3" value="correct" /> An item will flash quickly and you have to remember it <br />
+  <input type="radio" name="question3" value="incorrect" /> You'll be asked to classify the items you see <br />
+  <input type="radio" name="question3" value="incorrect" /> There will be a set of math problems to do <br />
+  <input type="radio" name="question3" value="incorrect" /> You will be given a survey about your attitudes <br />  
+  <br /><br />
+  
+   
+</form>
