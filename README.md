@@ -1,7 +1,7 @@
 # CausalEssentialism
 
 ### About
-R-scripts which were used to compare the likelihood of various causal structures. This was part of my undergraduate thesis. This work was completed at the Computational Cognitive Science Laboratory, University of Melbourne.
+R-scripts which were used to compare the likelihood of various causal structures. This work was completed at the Computational Cognitive Science Laboratory - University of Melbourne as part of my undergraduate thesis.
 
 ### Hypothesis and Motivation
 
